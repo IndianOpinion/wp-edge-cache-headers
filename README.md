@@ -82,7 +82,7 @@ With `composer/installers` the package lands in `wp-content/plugins/`. Without C
 | Outcome | When | Headers |
 |---|---|---|
 | PUBLIC | Anonymous GET or HEAD, cacheable status, no bypass condition | `Cache-Control: public, max-age=0, s-maxage=T, stale-while-revalidate=S, stale-if-error=E`, `X-Accel-Expires: T`, `X-Edge-Cache: cache`, `Vary: Accept-Encoding`. Removes `Expires` and `Pragma`. |
-| PRIVATE | Any bypass condition | `Cache-Control: private, no-store, max-age=0`, `X-Accel-Expires: 0`, `X-Edge-Cache: bypass` |
+| PRIVATE | Any bypass condition | `Cache-Control: private, no-store, max-age=0`, `X-Accel-Expires: 0`, `X-Edge-Cache: bypass` (each optional header only when its switch is on) |
 | RESPECT | Another component already said no-cache | Leaves its `Cache-Control` alone; adds `CDN-Cache-Control: no-store`, `X-Accel-Expires: 0`, `X-Edge-Cache: bypass` |
 | SKIP | wp-admin, admin-ajax, cron, XML-RPC, WP-CLI, disabled | Nothing |
 

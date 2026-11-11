@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace IndianOpinion\EdgeCacheHeaders\WordPress;
 
+use IndianOpinion\EdgeCacheHeaders\CacheControl;
 use IndianOpinion\EdgeCacheHeaders\Decision;
 use IndianOpinion\EdgeCacheHeaders\DecisionEngine;
 use IndianOpinion\EdgeCacheHeaders\Outcome;
@@ -79,7 +80,7 @@ final class Plugin
     public function register(): void
     {
         add_filter('nocache_headers', [$this->observer, 'observe'], PHP_INT_MAX);
-        add_filter('wp_headers', [$this, 'onWpHeaders'], 999);
+        add_filter('wp_headers', [$this, 'onWpHeaders'], 999, 2);
         add_action('send_headers', [$this, 'onSendHeaders'], 999);
         add_filter('wp_redirect_status', [$this, 'onRedirectStatus'], 999, 2);
         add_filter('template_include', [$this, 'onTemplateInclude'], PHP_INT_MAX);
@@ -123,9 +124,10 @@ final class Plugin
 
     /**
      * @param array<string, mixed> $headers
+     * @param object|null $wp The WP instance core passes; its `error` query var holds a status core sets after this filter.
      * @return array<string, mixed>
      */
-    public function onWpHeaders($headers)
+    public function onWpHeaders($headers, $wp = null)
     {
         if (!is_array($headers) || $this->context() !== RequestFacts::CONTEXT_FRONT) {
             return $headers;
@@ -133,7 +135,7 @@ final class Plugin
         if ($this->headersAlreadySent()) {
             return $headers;
         }
-        $facts = $this->collector()->front($this->policy(), $this->queue, $headers);
+        $facts = $this->collector()->front($this->policy(), $this->queue, $headers, null, RequestFacts::CONTEXT_FRONT, self::errorStatus($wp));
         $decision = $this->engine->decide($facts, $this->policy(), 'wp_headers');
         $this->record($decision);
         $this->observer->markDecided();
@@ -158,7 +160,11 @@ final class Plugin
      */
     public function onRedirectStatus($status, $location = '')
     {
-        if (!is_int($status) || $this->context() !== RequestFacts::CONTEXT_FRONT || $this->headersAlreadySent()) {
+        // Core drops a redirect whose location was filtered to empty; nothing is sent then.
+        if (!is_int($status) || !is_string($location) || $location === '') {
+            return $status;
+        }
+        if ($this->context() !== RequestFacts::CONTEXT_FRONT || $this->headersAlreadySent()) {
             return $status;
         }
         $facts = $this->collector()->front($this->policy(), $this->queue, [], $this->ownCacheControl, RequestFacts::CONTEXT_FRONT, $status);
@@ -238,11 +244,33 @@ final class Plugin
         $facts = $this->collector()->front($this->policy(), $this->queue, [], $this->ownCacheControl);
         $late = $this->engine->lateCheck($this->decision, $facts, $this->policy(), $hook);
         if ($late === $this->decision) {
+            // Still PUBLIC, but another component may have replaced the plugin's
+            // Cache-Control with header() since send_headers. Put it back (C8).
+            if ($this->ownCacheControl !== null && CacheControl::values($this->queue->lines(), 'Cache-Control') !== [$this->ownCacheControl]) {
+                HeaderApplier::toQueue($this->decision, $this->queue);
+            }
             return;
         }
         $previous = $this->ownCacheControl;
         $this->record($late);
         HeaderApplier::toQueue($late, $this->queue, $previous);
+    }
+
+    /**
+     * The status core will send for a request its query parser marked as an
+     * error (for example `?error=500`). Core calls status_header() only after
+     * `wp_headers`, so the header queue still says 200 at decision time.
+     */
+    private static function errorStatus(mixed $wp): ?int
+    {
+        if (!is_object($wp) || !isset($wp->query_vars) || !is_array($wp->query_vars)) {
+            return null;
+        }
+        $error = $wp->query_vars['error'] ?? null;
+        if ((is_int($error) || is_string($error)) && preg_match('/^[1-5][0-9]{2}$/', (string) $error) === 1) {
+            return (int) $error;
+        }
+        return null;
     }
 
     private function record(Decision $decision): void

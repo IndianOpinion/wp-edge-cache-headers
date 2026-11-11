@@ -123,6 +123,37 @@ final class PluginHooksTest extends PluginTestCase
         self::assertSame(['0'], $this->queue->values('X-Accel-Expires'));
     }
 
+    public function testLateCacheableHeaderFromAnotherPluginIsReplacedAgain(): void
+    {
+        $this->single();
+        $this->coreSendHeaders();
+        $own = $this->queue->values('Cache-Control');
+        // A plugin calls header('Cache-Control: ...') at template_redirect, replacing ours.
+        $this->queue->set('Cache-Control', 'public, max-age=10');
+        $this->templateInclude();
+        self::assertSame(Outcome::PUBLIC, $this->plugin->currentDecision()?->outcome);
+        self::assertSame($own, $this->queue->values('Cache-Control'), 'exactly one Cache-Control, the plugin\'s');
+    }
+
+    public function testErrorQueryVarStatusIsUsedAtWpHeaders(): void
+    {
+        // Core sets the status from the `error` query var only after wp_headers.
+        $wp = new \stdClass();
+        $wp->query_vars = ['error' => '500'];
+        apply_filters('wp_headers', [], $wp);
+        self::assertSame(Outcome::PRIVATE, $this->plugin->currentDecision()?->outcome);
+        self::assertSame(['status:500'], $this->plugin->currentDecision()?->reasons);
+    }
+
+    public function testRedirectWithEmptyLocationIsIgnored(): void
+    {
+        $this->single();
+        $this->coreSendHeaders();
+        apply_filters('wp_redirect_status', 302, '');
+        self::assertSame('wp_headers', $this->plugin->currentDecision()?->hook);
+        self::assertSame(Outcome::PUBLIC, $this->plugin->currentDecision()?->outcome);
+    }
+
     public function testT53LateStatusChangeDowngrades(): void
     {
         $this->single();

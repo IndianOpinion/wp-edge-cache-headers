@@ -203,6 +203,19 @@ final class SettingsTest extends PluginTestCase
         self::assertSame('quiet', WpStub::$siteOptions[Settings::NETWORK_OPTION]['profile']);
     }
 
+    public function testNetworkPageShowsNetworkDefaultsNotTheSiteOverrides(): void
+    {
+        WpStub::$multisite = true;
+        WpStub::$caps = ['manage_network_options' => true, 'manage_options' => true];
+        update_site_option(Settings::NETWORK_OPTION, ['custom_header_name' => 'X-Network-Edge']);
+        $this->settings(['custom_header_name' => 'X-Site-Edge']);
+        ob_start();
+        (new SettingsPage())->renderNetwork();
+        $html = (string) ob_get_clean();
+        self::assertStringContainsString('X-Network-Edge', $html);
+        self::assertStringNotContainsString('X-Site-Edge', $html);
+    }
+
     public function testSettingsPageRendersEscaped(): void
     {
         $this->settings(['extra_paths' => ['/members/']]);

@@ -12,7 +12,6 @@
  * License:           MIT
  * License URI:       https://opensource.org/licenses/MIT
  * Text Domain:       wp-edge-cache-headers
- * Network:           true
  *
  * Works as a normal plugin and as a must-use plugin (see README).
  *

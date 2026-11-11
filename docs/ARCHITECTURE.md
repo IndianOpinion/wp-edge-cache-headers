@@ -123,6 +123,11 @@ If output has already started at any of these points, the plugin sends nothing, 
 - **No-cache helper ownership.** A call while the visitor is logged in, or while the main query is a 404 before the main decision, is core's. Any other call is a third party's. A plugin that calls the helper on a 404 page before the main decision is therefore treated as core; the outcome is still never PUBLIC for a logged-in visitor.
 - **The `decision` filter can upgrade.** It is the operator's last word. The README warns that returning PUBLIC for an identified visitor defeats the plugin.
 - **Explain's 404 rule.** The in-process explain does not call core's `handle_404()` (it sends headers). It mirrors it: no posts, not search, robots, favicon, home or sitemap, and not an archive whose term or author exists, means 404. A canonical redirect is detected with `redirect_canonical( $url, false )` and reported as a simulated 301.
+- **`X-Accel-Expires` switch covers every outcome.** When it is off the header is absent on PUBLIC, PRIVATE and RESPECT alike (C6, T7). nginx then falls back to `Cache-Control` and the bypass signal header.
+- **Status from the `error` query var.** Core sets the status for a request its parser marked as an error (`?error=500`) only after `wp_headers`, so the main decision reads the status from the `WP` object core passes to that filter.
+- **Late check restores the header it owns.** If the late check keeps PUBLIC but another component has replaced the plugin's `Cache-Control` with `header()` since `send_headers`, the plugin's headers are applied again, so exactly one `Cache-Control` leaves PHP (C8).
+- **Redirects with an empty location** are ignored: core sends nothing for them, so the decision stays as it was.
+- **Plugin header has no `Network: true`.** The plugin can be network-activated or activated per site (C70).
 - **Explain from wp-admin** resolves the query inside an admin request, where WordPress includes some non-public statuses in queries. WP-CLI is the reference tool.
 
 ## Not yet

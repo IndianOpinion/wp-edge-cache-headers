@@ -94,6 +94,9 @@ final class DecisionEngineTest extends TestCase
         self::assertSame(Outcome::RESPECT, $respect->outcome);
         self::assertSame('0', $respect->header('X-Accel-Expires'));
         self::assertNull($this->decide(self::POST, ['sendXAccelExpires' => false])->header('X-Accel-Expires'));
+        $off = ['sendXAccelExpires' => false];
+        self::assertNull($this->decide(self::POST + ['loggedIn' => true], $off)->header('X-Accel-Expires'), 'absent on PRIVATE when off');
+        self::assertNull($this->decide(self::POST + ['queuedCacheControl' => ['no-store']], $off)->header('X-Accel-Expires'), 'absent on RESPECT when off');
     }
 
     public function testT8CustomHeader(): void

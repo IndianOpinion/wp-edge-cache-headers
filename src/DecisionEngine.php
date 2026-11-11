@@ -188,7 +188,9 @@ final class DecisionEngine
                 if ($policy->sendSurrogateControl) {
                     $headers['Surrogate-Control'] = 'no-store';
                 }
-                $headers['X-Accel-Expires'] = '0';
+                if ($policy->sendXAccelExpires) {
+                    $headers['X-Accel-Expires'] = '0';
+                }
                 if ($policy->sendCustomHeader) {
                     $headers[$customName] = 'bypass';
                 }

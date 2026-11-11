@@ -306,7 +306,8 @@ final class SettingsPage
         $plugin = Plugin::instance();
         $settings = $plugin->settings();
         $policy = $plugin->policy();
-        $v = $settings->values;
+        // The network page edits the network defaults, not the current site's own values.
+        $v = $network ? Settings::inherited() : $settings->values;
         $slug = $network ? self::NETWORK_SLUG : self::SLUG;
         $action = $network ? network_admin_url('settings.php?page=' . $slug) : admin_url('options-general.php?page=' . $slug);
 

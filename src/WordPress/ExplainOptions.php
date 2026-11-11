@@ -39,6 +39,9 @@ final class ExplainOptions
             if (preg_match('/^[A-Za-z0-9\-]{1,64}$/', $name) !== 1 || preg_match('/[\r\n\0]/', $value) === 1) {
                 throw new ExplainFailed('Headers must be given as Name:value with a plain header name.');
             }
+            if (strcasecmp($name, 'Host') === 0) {
+                throw new ExplainFailed('The Host header cannot be set; give the host in the URL.');
+            }
         }
         $this->cookies = array_values($cookies);
         $this->headers = $headers;
