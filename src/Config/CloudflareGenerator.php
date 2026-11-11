@@ -12,7 +12,9 @@ use IndianOpinion\EdgeCacheHeaders\Policy;
  */
 final class CloudflareGenerator
 {
+    /** Dashboard wording; the API mode is `bypass_by_default`. */
     public const EDGE_TTL = 'Use cache-control header if present, bypass cache if not';
+    /** Dashboard wording; the API mode is `respect_origin`. */
     public const BROWSER_TTL = 'Respect origin';
 
     /**
@@ -27,10 +29,10 @@ final class CloudflareGenerator
         }
         foreach (array_merge(Policy::SKIP_PATHS, $policy->bypassPaths) as $path) {
             // "contains" rather than "starts with" so a subdirectory install or network site is covered too.
-            $clauses[] = 'not http.request.uri.path contains ' . self::literal($path);
+            $clauses[] = 'not (http.request.uri.path contains ' . self::literal($path) . ')';
         }
         foreach ($policy->bypassCookiePrefixes as $prefix) {
-            $clauses[] = 'not http.cookie contains ' . self::literal($prefix);
+            $clauses[] = 'not (http.cookie contains ' . self::literal($prefix) . ')';
         }
         if ($policy->bypassQueryArgs !== []) {
             $clauses[] = 'not any(http.request.uri.args.names[*] in {'
@@ -57,13 +59,15 @@ final class CloudflareGenerator
         $lines[] = '';
         $lines[] = 'Then:';
         $lines[] = '  Cache eligibility: Eligible for cache';
-        $lines[] = '  Edge TTL: ' . self::EDGE_TTL;
-        $lines[] = '  Browser TTL: ' . self::BROWSER_TTL;
+        $lines[] = '  Edge TTL: ' . self::EDGE_TTL . ' (API: edge_ttl.mode bypass_by_default)';
+        $lines[] = '  Browser TTL: ' . self::BROWSER_TTL . ' (API: browser_ttl.mode respect_origin)';
         $lines[] = '';
         $lines[] = 'Notes:';
         $lines[] = '  - A Cloudflare purge clears Cloudflare only. The next miss refills from nginx. Purge nginx first, or rely on TTLs.';
         $lines[] = '  - Normalise query strings (utm_*, fbclid) with Cloudflare cache-key settings or a Transform Rule, not here.';
         $lines[] = '  - Requests that do not match keep the default behaviour: HTML is not cached.';
+        $lines[] = '  - Cloudflare advises against s-maxage with stale-while-revalidate. To have Cloudflare serve stale while it';
+        $lines[] = '    revalidates, turn on CDN-Cache-Control: it carries max-age plus the stale directives, without s-maxage.';
         $lines[] = '';
         return implode("\n", $lines);
     }

@@ -119,6 +119,12 @@ final class ExplainTest extends PluginTestCase
         self::assertSame('page', $explainer->explain('https://example.com/about/', new ExplainOptions())->decision->type);
     }
 
+    public function testHostHeaderCannotBeSimulated(): void
+    {
+        $this->expectException(ExplainFailed::class);
+        new ExplainOptions(headers: ['Host' => 'elsewhere.example']);
+    }
+
     public function testT61LiveMismatchExitsOne(): void
     {
         $this->liveResponse = [
@@ -243,7 +249,7 @@ final class ExplainTest extends PluginTestCase
         self::assertStringContainsString('my_session_', $nginx);
         WpStub::$output = [];
         [, $cf] = $this->cli('cloudflare');
-        self::assertStringContainsString('not http.cookie contains "my_session_"', $cf);
+        self::assertStringContainsString('not (http.cookie contains "my_session_")', $cf);
         self::assertStringContainsString('http.host in {"example.com"}', $cf);
     }
 

@@ -29,6 +29,7 @@ Then copy part 1 into `http {}` and part 2 into the PHP `location`. The generate
 ## Traps
 
 - **Do not ignore `X-Accel-Expires`.** If nginx has `fastcgi_ignore_headers Cache-Control` (common, because core sends no-cache on many screens) and the plugin's `X-Accel-Expires` is off, every URL gets the fixed `fastcgi_cache_valid` TTL, whatever the plugin decides. `wp edge-cache config` warns about this.
+- **`add_header` does not inherit.** An `add_header` inside the PHP location (the `X-Cache-Status` line) switches off every `add_header` from the `server` block for that location. Repeat the server-level ones (security headers, for example) in the location.
 - **One `Cache-Control` per response.** Do not add `expires` or `add_header Cache-Control` for PHP locations. The plugin already sends exactly one.
 - **Bound the staleness.** `updating` with a long `inactive` window can hand the first visitor after a quiet hour a page an hour old. For low-traffic, short-TTL URLs, drop `updating` from `fastcgi_cache_use_stale` and rely on the lock.
 - **Search.** Search is not cached by default. Rate-limit it with `limit_req` on `$arg_s`, because every search URL is unique.

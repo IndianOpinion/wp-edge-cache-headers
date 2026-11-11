@@ -48,10 +48,10 @@ final class ConfigGeneratorTest extends TestCase
     {
         $out = (new CloudflareGenerator())->generate(new Policy(), ['example.com', 'www.example.com']);
         foreach (Policy::DEFAULT_COOKIE_PREFIXES as $prefix) {
-            self::assertStringContainsString('not http.cookie contains "' . $prefix . '"', $out);
+            self::assertStringContainsString('not (http.cookie contains "' . $prefix . '")', $out);
         }
         foreach (array_merge(Policy::DEFAULT_PATHS, Policy::SKIP_PATHS) as $path) {
-            self::assertStringContainsString('not http.request.uri.path contains "' . $path . '"', $out);
+            self::assertStringContainsString('not (http.request.uri.path contains "' . $path . '")', $out);
         }
         self::assertStringContainsString('http.host in {"example.com" "www.example.com"}', $out);
         self::assertStringContainsString('Use cache-control header if present, bypass cache if not', $out);
