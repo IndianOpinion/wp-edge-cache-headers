@@ -1,0 +1,33 @@
+<?xml version="1.0"?>
+<ruleset name="wp-edge-cache-headers">
+    <description>PSR-12 for all PHP in the plugin, its tests and examples.</description>
+
+    <file>src</file>
+    <file>tests</file>
+    <file>examples</file>
+    <file>wp-edge-cache-headers.php</file>
+    <file>uninstall.php</file>
+    <file>autoload.php</file>
+
+    <exclude-pattern>tests/stubs/*</exclude-pattern>
+    <exclude-pattern>vendor/*</exclude-pattern>
+
+    <arg name="extensions" value="php"/>
+    <arg name="colors"/>
+    <arg value="sp"/>
+
+    <rule ref="PSR12">
+        <exclude name="Generic.Files.LineLength"/>
+    </rule>
+
+    <!-- Entry files declare a plugin header and run code by design. -->
+    <rule ref="PSR1.Files.SideEffects">
+        <exclude-pattern>wp-edge-cache-headers.php</exclude-pattern>
+        <exclude-pattern>uninstall.php</exclude-pattern>
+        <exclude-pattern>autoload.php</exclude-pattern>
+        <exclude-pattern>src/functions.php</exclude-pattern>
+        <exclude-pattern>examples/*</exclude-pattern>
+        <exclude-pattern>tests/bootstrap.php</exclude-pattern>
+        <exclude-pattern>tests/phpstan-bootstrap.php</exclude-pattern>
+    </rule>
+</ruleset>

@@ -1,0 +1,45 @@
+{
+    "name": "indianopinion/wp-edge-cache-headers",
+    "description": "Per-template Cache-Control for WordPress so Cloudflare and nginx can cache anonymous HTML.",
+    "type": "wordpress-plugin",
+    "license": "MIT",
+    "keywords": ["wordpress", "cache-control", "cloudflare", "nginx", "fastcgi_cache", "cdn", "mu-plugin"],
+    "homepage": "https://github.com/IndianOpinion/wp-edge-cache-headers",
+    "support": {
+        "issues": "https://github.com/IndianOpinion/wp-edge-cache-headers/issues",
+        "source": "https://github.com/IndianOpinion/wp-edge-cache-headers"
+    },
+    "authors": [
+        { "name": "Indian Opinion", "email": "hello@indianopinion.org" }
+    ],
+    "require": {
+        "php": ">=8.1"
+    },
+    "require-dev": {
+        "php-stubs/wordpress-stubs": "^6.4",
+        "php-stubs/wp-cli-stubs": "^2.10",
+        "phpstan/phpstan": "^2.1",
+        "phpunit/phpunit": "^10.5",
+        "squizlabs/php_codesniffer": "^3.10",
+        "szepeviktor/phpstan-wordpress": "^2.0"
+    },
+    "autoload": {
+        "psr-4": { "IndianOpinion\\EdgeCacheHeaders\\": "src/" },
+        "files": ["src/functions.php"]
+    },
+    "autoload-dev": {
+        "psr-4": { "IndianOpinion\\EdgeCacheHeaders\\Tests\\": "tests/" }
+    },
+    "scripts": {
+        "lint": "find src tests examples wp-edge-cache-headers.php uninstall.php autoload.php -name '*.php' -not -path 'tests/stubs/*' -print0 | xargs -0 -n1 php -l",
+        "cs": "phpcs",
+        "stan": "phpstan analyse --no-progress --memory-limit=1G",
+        "test": "phpunit"
+    },
+    "config": {
+        "sort-packages": true,
+        "allow-plugins": {
+            "phpstan/extension-installer": true
+        }
+    }
+}
